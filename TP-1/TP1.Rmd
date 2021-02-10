@@ -1,6 +1,7 @@
 ---
 title: "Gestion de Portefeuille"
 subtitle: 'TP-1: Analyse du CAC40'
+author: 'Ettoré Hidoux, Aurèle Boisseau & Clément Mathé'
 date: "Février-Mars 2021"
 output:
   word_document: default
@@ -25,6 +26,7 @@ library(lubridate)
 library(Hmisc)
 library(tseries)
 library(timeSeries)
+library(corrplot)
 
 get.src.folder <- function() {
   path.expand("../GP/src")
@@ -101,15 +103,84 @@ plot(ts.index, main='Rendement hebdomadaire de l\'indice CAC40')
 
 + Calculer la matrice de corrélation des actions de l\'indice. 
 
+```{r, correlation matrix, echo=TRUE} 
+  corr_matrix <- cor(ts.all)
+```
+```{r, plot-corr_matrix, echo=TRUE, fig.height=5}
+corrplot(corr_matrix, type="upper", order="hclust", 'color',  main='Matrice de corrélation de l\'indice CAC40')
+```
+
 + Rechercher des actions fortement corrélées et d'autres qui semblent indépendantes. 
 Justifier ces observations en considérant la nature des entreprises.
+
+```{r, high_corr function, echo=TRUE}
+high_corr <- function(x){
+  indices <- (abs(x)>=0.70 & x!=1)
+  for (i in unique(corr_matrix[indices]))
+    print(rownames(which(corr_matrix==i, arr.ind=TRUE)))
+}
+```
+
+```{r, low_corr function, echo=TRUE}
+low_corr <- function(x){
+  indices <- (abs(x)<=0.01)
+  for (i in unique(corr_matrix[indices]))
+    print(rownames(which(corr_matrix==i, arr.ind=TRUE)))
+}
+```
+
+```{r, correlation search, echo=TRUE} 
+corr70 <- (abs(corr_matrix)>=0.70 & corr_matrix!=1)
+corr20 <- (abs(corr_matrix)<=0.20)
+#indices <- (abs(corr_matrix)>=0.70 & corr_matrix!=1)
+#corr_matrix[indices]
+
+#which(corr_matrix==unique(corr_matrix[indices])[2], arr.ind=TRUE)
+print('CORRELATED')
+high_corr(corr_matrix)
+print('INDEPENDANT')
+low_corr(corr_matrix)
+```
+```{r, corr_search result, echo=TRUE}
+corrplot(corr70, type="upper", order="hclust", 'color', main='Indice CAC40 corrélés')
+corrplot(corr20, type="upper", order="hclust", 'color', main='Indice CAC40 indépendant')
+```
+
+Commentaire: 
+Corrélé: - gle-aca (société générale - crédit agricole) deux banques francaises // ex: même domaine et meme marché donc sont sensible aux mêmes variations
+         - sgo-ker (saint gobain - kering) une entreprise de production, transformation de matière première et une entreprise du luxe possédant plusieurs marques // ex: peut être que saint gobain est un fournisseur de matière première pour le groupe kering et que leur rendements sont liés 
+         - sgo-su (schneider electric) une entreprise solution de gestion d'electricité // ex: même explication 
 
 + Choisir 3 titres, et reproduire la figure 3.5, page 35 du manuel de B. Pfaff.
 Commenter les résultats obtenus.
 
+```{r, figure 3.5, echo=TRUE} 
+corr75 <- (abs(corr_matrix)>=0.70)
+corr25 <- (abs(corr_matrix)<=0.20)
+```
+
+Commentaire: 
+
 ## Analyse en composantes principales
 
 + Effectuer une ACP de la matrice de covariance des rendements hebdomadaires
+
+```{r, correlation search, echo=TRUE} 
+library("FactoMineR")
+library("factoextra")
+ts.pca <- PCA(corr_matrix, scale.unit = TRUE, ncp = 5, graph = TRUE)
+fviz_eig(ts.pca, addlabels = TRUE, ylim = c(0, 50))
+```
+
 + Observer les projections des variables sur les deux premiers vecteurs propres, et tenter de fournir une interprétation économique de ces facteurs.
 
+```{r, figure 3.5, echo=TRUE} 
+var <- get_pca_var(ts.pca)
+var
+corrplot(head(t(var$contrib),2), is.corr=FALSE)
+corrplot(var$coord[,c(1,2)], is.corr=FALSE)
+fviz_contrib(ts.pca, choice = "var", axes = 1)
+fviz_contrib(ts.pca, choice = "var", axes = 2)
+```
 
+Commentaire Dim-1: Les valeurs qui ont une contribution importantes sont celles d'entreprises de matière premiere (sgo, ri), de luxe (ker, mc), automobile/transports (ml, alo, ac, ug), banques (gle, aca), technologies (lg, alu ), energie (su, lr) et communication (cs, pub)
