@@ -23,6 +23,13 @@ header-includes:
   - \usepackage{makecell}
   - \usepackage{xcolor}
   - \usepackage{amsmath}
+  - \usepackage{tseries}
+  - \usepackage{timeSeries}
+  - \usepackage{plotrix}
+  - \usepackage{fields}
+  - \usepackage{FNN}
+  - \usepackage{emdist}
+  - \usepackage{rmarkdown}
 ---
 
 ```{r setup, include=FALSE}
@@ -31,11 +38,11 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ```{r folder-tools, include=TRUE}
 get.src.folder <- function() {
-  path.expand("../GP/src")
+  path.expand("/Users/ettorehidoux/Desktop/Gestion de Portefeuille & Algorithme de Trading/TB-GestionPort/GP/src")
 }
 
 get.data.folder <- function() {
-  path.expand("../GP/data")
+  path.expand("/Users/ettorehidoux/Desktop/Gestion de Portefeuille & Algorithme de Trading/TB-GestionPort/GP/data")
 }
 ```
 
@@ -48,7 +55,7 @@ source(file.path(get.src.folder(), 'FileUtils.R'))
 # Lecture d'une série
 
 ```{r, echo=TRUE}
-ts.zc <- get.ts(folder="SBF120", ticker="zc.pa")
+ts.zc <- get.ts(folder="CAC40", ticker="ac.pa")
 ```
 
 ```{r, fig-1, echo=FALSE, fig.width=10, fig.cap="Zodiac Aerospace"}
@@ -64,7 +71,7 @@ Obtenir le même graphique avec un titre du CAC40.
 On calcule ensuite le rendement moyen annuel et on présente les résultats sous forme de tableau.
 
 ```{r, echo=TRUE, cache=TRUE}
-ts.EuroStoxx50 <- get.all.ts(folder="EuroStoxx50", returns=TRUE, combine=TRUE)
+ts.EuroStoxx50 <- get.all.ts(folder="CAC40", returns=TRUE, combine=TRUE)
 avg.ret <- 252*colMeans(ts.EuroStoxx50)*100
 
 ticker <- toupper(gsub("\\..*$", "", names(avg.ret)))
@@ -78,7 +85,7 @@ n.rows <- nrow(avg.ret.table)
 n.mid <- round(n.rows/2)
 knitr::kable(list(avg.ret.table[1:n.mid,], avg.ret.table[(n.mid+1):n.rows,]), 
              col.names=c("Ticker", "Exchange", "Rendement (%)"), 
-             caption="Rendement annuel moyen des actions de l\'EuroStoxx 50",
+             caption="Rendement annuel moyen des actions du CAC40",
              digits=1, booktab=TRUE, row.names=FALSE, longtable=FALSE)
 ```
 
@@ -96,7 +103,7 @@ Executez le code pas à pas pour comprendre ce que font \texttt{sapply} et \text
 min.length = 252*7
 
 ts.all <- get.all.ts(
-  folder='NASDAQ', tickers=NULL, returns = FALSE,
+  folder='CAC40', tickers=NULL, returns = FALSE,
   dt.start = dmy('01Jan2007'), combine = F
 )
 
@@ -122,7 +129,7 @@ On imprime les dix meilleurs et les dix pires rendements moyens.
 sorted.good.df <- good.df[order(good.df$ret),]
 knitr::kable(rbind(head(sorted.good.df, 10), tail(sorted.good.df,10)),
              col.names=c("Ticker", "Rendement (%)"), 
-             caption="NASDAQ: meilleurs et pires rendements annuels moyens", 
+             caption="CAC40: meilleurs et pires rendements annuels moyens", 
              digits=1, booktab=TRUE, row.names=FALSE)
 
 ```
